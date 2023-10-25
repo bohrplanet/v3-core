@@ -271,13 +271,18 @@ contract UniswapV3Pool is IUniswapV3Pool, NoDelegateCall {
     function initialize(uint160 sqrtPriceX96) external override {
         require(slot0.sqrtPriceX96 == 0, 'AI');
 
+        // 这个方法涉及到比较多的定点数计算和位运算，先略过
+        // 只需要明白根据根号P去寻找最相近的tick就可以了
         int24 tick = TickMath.getTickAtSqrtRatio(sqrtPriceX96);
 
+        // cardinality的意思是当前能存多少个值
+        // cardinalityNext是当扩容之后cardinality的值
         (uint16 cardinality, uint16 cardinalityNext) = observations.initialize(_blockTimestamp());
 
         slot0 = Slot0({
             sqrtPriceX96: sqrtPriceX96,
             tick: tick,
+            // observationIndex的意思是当前观测点在observations中的位置是第几个
             observationIndex: 0,
             observationCardinality: cardinality,
             observationCardinalityNext: cardinalityNext,
@@ -316,6 +321,7 @@ contract UniswapV3Pool is IUniswapV3Pool, NoDelegateCall {
 
         Slot0 memory _slot0 = slot0; // SLOAD for gas optimization
 
+        // 更新当前的头寸的信息，本质就是在这个头寸的两个tick上更新值，再更新一下这个头寸的一些信息
         position = _updatePosition(
             params.owner,
             params.tickLower,
@@ -358,6 +364,7 @@ contract UniswapV3Pool is IUniswapV3Pool, NoDelegateCall {
                     params.liquidityDelta
                 );
 
+                // 因为当前tick的流动性被影响了，所以需要更新一下当前的liquidity
                 liquidity = LiquidityMath.addDelta(liquidityBefore, params.liquidityDelta);
             } else {
                 // current tick is above the passed range; liquidity can only become in range by crossing from right to

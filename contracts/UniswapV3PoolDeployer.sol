@@ -31,7 +31,9 @@ contract UniswapV3PoolDeployer is IUniswapV3PoolDeployer {
         uint24 fee,
         int24 tickSpacing
     ) internal returns (address pool) {
+        // 因为之后还要计算合约地址，所以为了让计算简单一些，选择先把参数存在这个合约中，在new新的Pool合约的时候，从这个合约取构造函数的参数
         parameters = Parameters({factory: factory, token0: token0, token1: token1, fee: fee, tickSpacing: tickSpacing});
+        // 这里要返回一个UniswapV3Pool对象，但是强制转换成了address类型
         pool = address(new UniswapV3Pool{salt: keccak256(abi.encode(token0, token1, fee))}());
         delete parameters;
     }

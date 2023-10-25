@@ -42,6 +42,7 @@ library Tick {
     ///     e.g., a tickSpacing of 3 requires ticks to be initialized every 3rd tick i.e., ..., -6, -3, 0, 3, 6, ...
     /// @return The max liquidity per tick
     function tickSpacingToMaxLiquidityPerTick(int24 tickSpacing) internal pure returns (uint128) {
+        // 这里是把左右两个边缘不足tickSpacing的给截掉
         int24 minTick = (TickMath.MIN_TICK / tickSpacing) * tickSpacing;
         int24 maxTick = (TickMath.MAX_TICK / tickSpacing) * tickSpacing;
         uint24 numTicks = uint24((maxTick - minTick) / tickSpacing) + 1;
@@ -108,6 +109,8 @@ library Tick {
     /// @param maxLiquidity The maximum liquidity allocation for a single tick
     /// @return flipped Whether the tick was flipped from initialized to uninitialized, or vice versa
     function update(
+        // 这里直接把整个mapping都带过来，而且是storage，也就是指向了storage的这个数据结构
+        // 这种用法可以学习一下，在uniswap中使用的比较多
         mapping(int24 => Tick.Info) storage self,
         int24 tick,
         int24 tickCurrent,

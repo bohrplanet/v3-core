@@ -21,6 +21,7 @@ contract UniswapV3Factory is IUniswapV3Factory, UniswapV3PoolDeployer, NoDelegat
 
     constructor() {
         owner = msg.sender;
+        // event也写在接口合约中，这样增加可读性
         emit OwnerChanged(address(0), msg.sender);
 
         feeAmountTickSpacing[500] = 10;
@@ -32,16 +33,21 @@ contract UniswapV3Factory is IUniswapV3Factory, UniswapV3PoolDeployer, NoDelegat
     }
 
     /// @inheritdoc IUniswapV3Factory
+    // 使用noDelegateCall这个modifer，是因为当前方法里面调用了其他方法，所以不能被委托调用
+    // 之后写一些方法，如果里面调用了其他方法的话，那么不希望被委托调用的时候，就可以加上noDelegateCall这个modifer
     function createPool(
         address tokenA,
         address tokenB,
         uint24 fee
     ) external override noDelegateCall returns (address pool) {
         require(tokenA != tokenB);
+        // 永远是小的token在前面，作为token0，大的在后面，作为token1
         (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
         require(token0 != address(0));
         int24 tickSpacing = feeAmountTickSpacing[fee];
         require(tickSpacing != 0);
+        // 这里可以看到因为getPool在这个合约中是变量，但是在其接口合约中是方法，所以使用方法是不同的，这里是多维数组的用法
+        // 哪个合约怎么定义的，就用当前合约的用法
         require(getPool[token0][token1][fee] == address(0));
         pool = deploy(address(this), token0, token1, fee, tickSpacing);
         getPool[token0][token1][fee] = pool;
